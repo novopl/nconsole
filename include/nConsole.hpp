@@ -20,6 +20,7 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 namespace novo{
   typedef std::string           String;
   typedef std::vector<String>   StringVector;
+
   //====================================================================
   /** \class Console
   \brief  Console class.
@@ -53,6 +54,9 @@ namespace novo{
 
       Commands  m_commands;
   };
+
+  extern const int kConsoleMsg;
+  extern void cprint(const char *fmt, ...);
 }
 
 #endif/* __NOVO_CONSOLE_HPP__ */

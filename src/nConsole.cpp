@@ -12,10 +12,13 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 #include "nConsole.hpp"
 #include <fd/delegate/bind.hpp>
 #include <nLogger.hpp>
+#include <algorithm>
 
 #define _B(METHOD)  fd::bind(&METHOD, this)
 
 namespace novo{
+  const int kConsoleMsg = LogMsg::User;
+
   //------------------------------------------------------------------//
   void tokenize(StringVector *out, const String &in, 
                 const char delim=' ', const char group='\"'){
@@ -43,6 +46,10 @@ namespace novo{
     CommandFunc   func;
     String        name;
     String        desc;
+
+    bool operator<(const Command &cmd) const{
+      return name < cmd.name;
+    }
   };
   //------------------------------------------------------------------//
   Console::Console(const Console &obj){
@@ -53,23 +60,22 @@ namespace novo{
   }
   //------------------------------------------------------------------//
   Console::Console(){
-    logger()->set_tag(LogMsg::App, "game");
-    app_log("Initializing console.\n");
+    logger()->set_tag(kConsoleMsg, "console");
+    cprint("Initializing console.\n");
     add( _B(Console::help),    "help",     "Print this help" );
     add( _B(Console::echo),    "echo",     "Echo reply" );
     add( _B(Console::cmdlist), "cmdlist",  "Command list." );
   }
   //------------------------------------------------------------------//
   Console::~Console(){
-    app_log("Shutting down console.\n");
+    cprint("Shutting down console.\n");
     remove("help");
     remove("echo");
     remove("cmdlist");
 
     typedef Commands::const_iterator    Iter;
     for(Iter  it = m_commands.begin(); it != m_commands.end(); ++it){
-      log(LogMsg::Warning, "Command '%s' wasn't removed.\n", 
-          it->name.c_str());
+      logw("Command '%s' wasn't removed.\n", it->name.c_str());
     }
   }
   //------------------------------------------------------------------//
@@ -80,7 +86,7 @@ namespace novo{
     if( tokens.empty() )
       return;
     
-    log("] %s\n", input.c_str());
+    cprint("] %s\n", input.c_str());
 
     Command *c = find( tokens[0] );
     if( !c ){
@@ -132,7 +138,7 @@ namespace novo{
   //------------------------------------------------------------------//
   void Console::echo(const StringVector &args){
     if(args.empty()){
-      log("\n");
+      cprint("\n");
       return;
     }
 
@@ -141,13 +147,57 @@ namespace novo{
     for(Iter it = args.begin() + 1; it != args.end(); ++it){
       out+=*it+" ";
     }
-    log("%s\n", out.c_str());
+    cprint("%s\n", out.c_str());
   }
   //------------------------------------------------------------------//
   void Console::help(const StringVector &args){
+    if( args.size() == 1 ){
+      // Print general help.
+      cprint("To execute a command use syntax:\n");
+      cprint(" COMMAND [arguments]\n\n");
+
+      cprint("Not all commands accept arguments. Each word is a\n");
+      cprint("separate argument. If you want to pass multiple words\n");
+      cprint("as one argument, enclose them in double quotation\n");
+      cprint("marks - '\"'\n\n");
+
+      cprint("To see the list of all available commands type:\n");
+      cprint("cmdlist\n\n");
+
+      cprint("To get the help about a specific command type:\n");
+      cprint("help COMMAND_NAME\n");
+    }
+    else if( args.size() == 2 ){
+      // Print info about requested command
+      Command *c = find( args[1] );
+      cprint("%s\n", c->name.c_str());
+      cprint("  %s\n", c->desc.c_str());
+    }
+    else{
+      logw("Too many arguments");
+    }
   }
   //------------------------------------------------------------------//
   void Console::cmdlist(const StringVector &args){
+    Commands alphaSorted(m_commands);
+    std::sort( alphaSorted.begin(), alphaSorted.end() );
+
+    typedef Commands::const_iterator  Iter;
+    for( Iter it = alphaSorted.begin(); it != alphaSorted.end(); ++it ){
+      cprint( " %-20s -- %s\n", it->name.c_str(), it->desc.c_str() );
+    }
   }
+
+
+  //------------------------------------------------------------------//
+  void cprint(const char *fmt, ...){
+    va_list argList;
+    va_start(argList, fmt);
+
+    char *msg = format(fmt, argList);
+    logger()->log( kConsoleMsg, msg );
+    delete[] msg;
+  }
+
 }
 

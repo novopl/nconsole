@@ -8,7 +8,11 @@ option(GL_SUPPORT   "Enable OpenGL support"   OFF)
 include_directories(./include)
 
 set(nconsole-src   src/nConsole.cpp)
-set(nconsole-deps  nfonts)
+set(nconsole-deps  )
+
+# nlogger
+add_subdirectory    (lib/nlogger)
+include_directories (lib/nlogger/include)
 
 # Freetype
 #----------
@@ -19,20 +23,16 @@ list                ( APPEND nconsole-deps ${FREETYPE_LIBRARIES} )
 
 # Qt4 support
 #-------------
-if( QT4_SUPPORT )
+if( QT_SUPPORT )
   find_package(Qt4 4.6.0 COMPONENTS QtCore QtGui QtXml REQUIRED )
-  message("--------------------------------")
   message(STATUS "Using Qt4")
-  message(STATUS "  include    : ${QT_INCLUDES}")
-  message(STATUS "  libs       : ${QT_LIBRARIES}")
-  message(STATUS "  defs       : ${QT_DEFINITIONS}")
   include(${QT_USE_FILE})
   include_directories ( ${QT_INCLUDES} )
   add_definitions     ( ${QT_DEFINITIONS} )
 
   
   
-  set(nconsole-qt-moc   include/QtConsole.hpp)
+  set(nconsole-qt-moc   include/nQtConsole.hpp)
   #set(nconsole-qt-res   src/qt/resources/resources.qrc)
   
   if(nconsole-qt-moc)
@@ -45,7 +45,7 @@ if( QT4_SUPPORT )
 
 
   # Add Qt4 dependent sources
-  list( APPEND nconsole-src  src/QtConsole.cpp 
+  list( APPEND nconsole-src  src/nQtConsole.cpp 
                              ${nconsole-res-src}
                              ${nconsole-moc-src})
   list( APPEND nconsole-deps ${QT_LIBRARIES} )
@@ -61,6 +61,8 @@ endif() # Qt4 support
 # OpenGL support
 #----------------
 if( GL_SUPPORT )
+  list( APPEND nconsole-deps GL GLU nfonts )
+
   if( NOT TARGET nconsole-qt )
     add_executable        (nconsole-gl  src/main_gl.cpp)
     target_link_libraries (nconsole-gl  nconsole GL GLU )

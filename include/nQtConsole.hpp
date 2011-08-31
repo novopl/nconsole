@@ -64,6 +64,7 @@ namespace novo{
 
     private slots:
       void on_input();
+      void on_output_focus();
 
     private:
       

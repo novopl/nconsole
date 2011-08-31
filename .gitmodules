@@ -1,0 +1,3 @@
+[submodule "lib/nlogger"]
+	path = lib/nlogger
+	url = /home/novo/src/git/nlogger.git

@@ -9,7 +9,7 @@
 Copyright (c) 2010 Mateusz 'novo' Klos
 */
 //======================================================================
-#include "QtConsole.hpp"
+#include "nQtConsole.hpp"
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -35,6 +35,7 @@ namespace novo{
         fmt = "<font color=\"#000000\">%s</font><br/>";
 
       return Out( format(fmt, msg.msg) );
+    }
   };
   //------------------------------------------------------------------//
   QtLogOut::QtLogOut()
@@ -65,7 +66,7 @@ namespace novo{
   :m_console(console){
     m_output  =new QTextEdit();
     m_input   =new QLineEdit();
-    
+
     m_output->setReadOnly(true);
 
     QVBoxLayout *layout =new QVBoxLayout();
@@ -80,8 +81,11 @@ namespace novo{
     m_logOut  =new QtLogOut();
     m_logOut->set_callback( fd::bind(&QtConsole::on_log, this)  );
     connect(m_input, SIGNAL(returnPressed()), this, SLOT(on_input()));
+    connect(m_input, SLOT(setFocus()), this, SLOT(on_output_focus()));
     
-    logger()->add_output( m_logOut, LogLevel::App | LogLevel::Warning );
+    logger()->add_output( m_logOut, kConsoleMsg | LogLevel::Warning );
+
+    m_input->setFocus();
   }
   //------------------------------------------------------------------//
   QtConsole::~QtConsole(){
@@ -94,5 +98,9 @@ namespace novo{
   //------------------------------------------------------------------//
   void QtConsole::on_log(const QString &msg){
     m_output->append( msg );
+  }
+  //------------------------------------------------------------------//
+  void QtConsole::on_output_focus(){
+    m_input->setFocus();
   }
 }
