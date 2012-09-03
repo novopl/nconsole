@@ -24,10 +24,9 @@ class QTextEdit;
 
 namespace novo{
   //====================================================================
-  /** \class QtLogOut
-  \brief  Converts nlibs log events into Qt signals.
+  /**
+    Converts nlibs log events into Qt signals.
   */
-  //====================================================================
   class QtLogOut : public LogOut{
       QtLogOut(const QtLogOut &obj)             {               }
       QtLogOut& operator=(const QtLogOut &obj)  { return *this; }
@@ -47,10 +46,9 @@ namespace novo{
 
   
   //====================================================================
-  /** \class QtConsole
-  \brief  Console Qt GUI.
+  /**
+    Console Qt GUI.
   */
-  //====================================================================
   class QtConsole : public QWidget{
       QtConsole(const QtConsole &obj)             {               }
       QtConsole& operator=(const QtConsole &obj)  { return *this; }

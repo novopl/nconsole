@@ -194,7 +194,7 @@ namespace novo{
     va_list argList;
     va_start(argList, fmt);
 
-    char *msg = format(fmt, argList);
+    char *msg = log_format(fmt, argList);
     logger()->log( kConsoleMsg, msg );
     delete[] msg;
   }

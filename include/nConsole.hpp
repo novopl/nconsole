@@ -22,10 +22,9 @@ namespace novo{
   typedef std::vector<String>   StringVector;
 
   //====================================================================
-  /** \class Console
-  \brief  Console class.
+  /** 
+    Console class.
   */
-  //====================================================================
   class Console{
       Console(const Console &obj);
       Console& operator=(const Console &obj);

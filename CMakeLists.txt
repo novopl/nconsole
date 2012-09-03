@@ -69,6 +69,11 @@ if( GL_SUPPORT )
   endif()
 endif()
 
+# Enable C++11 support
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "-std=c++0x")        ## Optimize
+endif()
+
 # Build targets
 #---------------
 if( NOT TARGET nconsole )
