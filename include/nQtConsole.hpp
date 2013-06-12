@@ -14,7 +14,7 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 
 #include "nConsole.hpp"
 #include "nLogger.hpp"
-#include <fd/delegate.hpp>
+#include <functional>
 #include <QWidget>
 #include <QLabel>
 
@@ -30,7 +30,7 @@ namespace novo{
   class QtLogOut : public LogOut{
       QtLogOut(const QtLogOut &obj)             {               }
       QtLogOut& operator=(const QtLogOut &obj)  { return *this; }
-      typedef fd::delegate<void(const QString &msg)>  MsgCallback;
+      typedef std::function<void(const QString &)>  MsgCallback;
       
     public:
       QtLogOut();

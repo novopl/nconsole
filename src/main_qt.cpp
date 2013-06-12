@@ -17,9 +17,9 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 
 
 //--------------------------------------------------------------------//
-int test_cmd(const novo::StringVector &args){
+int test_cmd(const novo::CArgs &args){
   using namespace novo;
-  typedef StringVector::const_iterator Iter;
+  typedef CArgs::const_iterator Iter;
   cprint("TEST COMMAND:\n");
   for( Iter it = args.begin(); it != args.end(); ++it ){
     cprint( " - %s\n", it->c_str() );
@@ -29,12 +29,20 @@ int test_cmd(const novo::StringVector &args){
 
 int main(int argc, char **argv){
   novo::logger_init();
+  novo::logger()->add_output( new novo::LogStdOut() );
   QApplication app(argc, argv);
   
-  novo::Console *console    =new novo::Console();
-  QWidget       *mainWindow =new novo::QtConsole(console);
+  
+  auto *console     = new novo::Console();
+  auto *mainWindow  = new novo::QtConsole( console );
 
-  console->add( &test_cmd, "test", "Test command");
+  //console->add( &test_cmd, "test", "Test command");
+  console->add("test", "Test command", [](const novo::CArgs& args){
+    novo::cprint("TEST COMMAND:\n");
+    for( const auto &arg: args ){
+      novo::cprint( " - %s\n", arg.c_str() );
+    }
+  });
   
   mainWindow->show();
 

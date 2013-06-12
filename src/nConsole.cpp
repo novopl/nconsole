@@ -10,31 +10,32 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 */
 //======================================================================
 #include "nConsole.hpp"
-#include <fd/delegate/bind.hpp>
 #include <nLogger.hpp>
 #include <algorithm>
 
-#define _B(METHOD)  fd::bind(&METHOD, this)
+#define _B(METHOD)  std::bind(&METHOD, this, _1)
 
 namespace novo{
   const int kConsoleMsg = LogMsg::User;
 
   //------------------------------------------------------------------//
-  void tokenize(StringVector *out, const String &in, 
+  void tokenize(CArgs *out, const String &in, 
                 const char delim=' ', const char group='\"'){
     out->clear();
 
     typedef String::size_type Index_t;
     Index_t off = 0;
+    bool ingrp  = false;
 
     for(Index_t i = 0; i < in.length(); ++i){
-      if( in[i] == delim ){
+      if( in[i] == delim && !ingrp ){
         if( i > off+1 ){
           out->push_back(in.substr(off, i - off));
         }
         off = i + 1;
       }
       else if( in[i] == group ){
+        ingrp = !ingrp;
       }
     }
     if( off < in.length() )
@@ -42,45 +43,49 @@ namespace novo{
   }
 
 
+  //====================================================================
   struct Console::Command{
-    CommandFunc   func;
-    String        name;
-    String        desc;
+    CmdFunc   func;
+    String    name;
+    String    desc;
 
     bool operator<(const Command &cmd) const{
       return name < cmd.name;
     }
   };
   //------------------------------------------------------------------//
-  Console::Console(const Console &obj){
-  }
-  //------------------------------------------------------------------//
-  Console& Console::operator=(const Console &obj){
-    return *this;
-  }
-  //------------------------------------------------------------------//
   Console::Console(){
     logger()->set_tag(kConsoleMsg, "console");
     cprint("Initializing console.\n");
-    add( _B(Console::help),    "help",     "Print this help" );
-    add( _B(Console::echo),    "echo",     "Echo reply" );
-    add( _B(Console::cmdlist), "cmdlist",  "Command list." );
+
+    using namespace std::placeholders;
+    add( "cmdlist", "List of available commands", 
+        std::bind( &Console::cmd_cmdlist, this, _1 ));
+    add( "cvarlist", "List of all registered cvars", 
+        _B( Console::cmd_cvarlist ) );
+    add( "cvar", "Set/get cvar value", 
+        _B( Console::cmd_cvar ) );
+    add( "help", "Print this help", 
+        _B( Console::cmd_help ) );
+    add( "echo", "Print message to the console",   
+        _B( Console::cmd_echo ) );
   }
   //------------------------------------------------------------------//
   Console::~Console(){
     cprint("Shutting down console.\n");
+    remove("cmdlist");
+    remove("cvarlist");
+    remove("cvar");
     remove("help");
     remove("echo");
-    remove("cmdlist");
 
-    typedef Commands::const_iterator    Iter;
-    for(Iter  it = m_commands.begin(); it != m_commands.end(); ++it){
-      logw("Command '%s' wasn't removed.\n", it->name.c_str());
+    for( const auto &cmd: m_commands ){
+      logw("Command '%s' wasn't removed.\n", cmd.name.c_str());
     }
   }
   //------------------------------------------------------------------//
   void Console::process_input(const String &input){
-    StringVector tokens;
+    CArgs tokens;
     tokenize( &tokens, input, ' ', '\"' );
 
     if( tokens.empty() )
@@ -97,17 +102,16 @@ namespace novo{
     c->func(tokens);
   }
   //------------------------------------------------------------------//
-  bool Console::add(CommandFunc cmd, const String &name, 
-                    const String &description){
-    if( !cmd || name.empty() || description.empty() || exists(name) )
+  bool Console::add(const String &name, const String &desc, CmdFunc fn){
+    if( !fn || name.empty() || desc.empty() || exists(name) )
       return false;
 
-    Command c;
-    c.func  = cmd;
-    c.name  = name;
-    c.desc  = description;
+    Command cmd;
+    cmd.func  = fn;
+    cmd.name  = name;
+    cmd.desc  = desc;
 
-    m_commands.push_back(c);
+    m_commands.push_back( cmd );
     return true;
   }
   //------------------------------------------------------------------//
@@ -127,30 +131,35 @@ namespace novo{
   }
   //------------------------------------------------------------------//
   Console::Command* Console::find(const String &name){
-    typedef Commands::iterator  Iter;
-    for(Iter it = m_commands.begin(); it != m_commands.end(); ++it){
-      if( it->name == name ){
-        return &*it;
-      }
+    for( auto &cmd: m_commands ){
+      if( cmd.name == name )
+        return &cmd;
     }
-    return 0;
+    return nullptr;
   }
   //------------------------------------------------------------------//
-  void Console::echo(const StringVector &args){
-    if(args.empty()){
-      cprint("\n");
-      return;
-    }
+  void Console::cmd_cmdlist(const CArgs &args){
+    Commands alphaSorted(m_commands);
+    std::sort( alphaSorted.begin(), alphaSorted.end() );
 
-    String out;
-    typedef StringVector::const_iterator  Iter;
-    for(Iter it = args.begin() + 1; it != args.end(); ++it){
-      out+=*it+" ";
+    for( const auto &cmd: alphaSorted){
+      cprint( " %-20s -- %s\n", cmd.name.c_str(), cmd.desc.c_str() );
     }
-    cprint("%s\n", out.c_str());
   }
   //------------------------------------------------------------------//
-  void Console::help(const StringVector &args){
+  void Console::cmd_cvarlist(const CArgs &args){
+    Commands alphaSorted(m_commands);
+    std::sort( alphaSorted.begin(), alphaSorted.end() );
+
+    for( const auto &cmd: alphaSorted){
+      cprint( " %-20s -- %s\n", cmd.name.c_str(), cmd.desc.c_str() );
+    }
+  }
+  //------------------------------------------------------------------//
+  void Console::cmd_cvar(const CArgs &args){
+  }
+  //------------------------------------------------------------------//
+  void Console::cmd_help(const CArgs &args){
     if( args.size() == 1 ){
       // Print general help.
       cprint("To execute a command use syntax:\n");
@@ -174,18 +183,22 @@ namespace novo{
       cprint("  %s\n", c->desc.c_str());
     }
     else{
-      logw("Too many arguments");
+      logw("Too many arguments\n");
     }
   }
   //------------------------------------------------------------------//
-  void Console::cmdlist(const StringVector &args){
-    Commands alphaSorted(m_commands);
-    std::sort( alphaSorted.begin(), alphaSorted.end() );
-
-    typedef Commands::const_iterator  Iter;
-    for( Iter it = alphaSorted.begin(); it != alphaSorted.end(); ++it ){
-      cprint( " %-20s -- %s\n", it->name.c_str(), it->desc.c_str() );
+  void Console::cmd_echo(const CArgs &args){
+    if(args.empty()){
+      cprint("\n");
+      return;
     }
+
+    String out;
+    typedef CArgs::const_iterator  Iter;
+    for(Iter it = args.begin() + 1; it != args.end(); ++it){
+      out+=*it+" ";
+    }
+    cprint("%s\n", out.c_str());
   }
 
 

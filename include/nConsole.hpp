@@ -15,43 +15,47 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 #include <iostream>
 #include <string>
 #include <vector>
-#include "fd/delegate.hpp"
+#include <functional>
 
 namespace novo{
   typedef std::string           String;
-  typedef std::vector<String>   StringVector;
+  typedef std::vector<String>   CArgs;
 
   //====================================================================
   /** 
     Console class.
   */
   class Console{
-      Console(const Console &obj);
-      Console& operator=(const Console &obj);
+    Console(const Console &obj)             = delete;
+    Console(const Console &&obj)            = delete;
+    Console& operator=(const Console &obj)  = delete;
+    Console& operator=(const Console &&obj) = delete;
 
-      typedef fd::delegate<void(const StringVector &args)>  CommandFunc;
-      
-    public:
-      Console();
-      virtual ~Console();
+    typedef std::function<void(const CArgs &)>  CmdFunc;
+    
+  public:
+    Console();
+    virtual ~Console();
 
-      void process_input(const String &input);
-      bool add( CommandFunc cmd, const String &name, 
-                const String &description);
-      bool remove(const String &name);
-      bool exists(const String &name);
+    void process_input(const String &input);
+    bool add(const String &name, const String &desc, CmdFunc cmd);
+    bool remove(const String &name);
+    bool exists(const String &name);
 
-      void echo(const StringVector &args);
-      void help(const StringVector &args);
-      void cmdlist(const StringVector &args);
 
-    private:
-      struct Command;
-      typedef std::vector<Command>    Commands;
-      
-      Command* find(const String &name);
+    void cmd_cmdlist(const CArgs &args);
+    void cmd_cvarlist(const CArgs &args);
+    void cmd_cvar(const CArgs &args);
+    void cmd_echo(const CArgs &args);
+    void cmd_help(const CArgs &args);
 
-      Commands  m_commands;
+  private:
+    struct Command;
+    typedef std::vector<Command>    Commands;
+    
+    Command* find(const String &name);
+
+    Commands  m_commands;
   };
 
   extern const int kConsoleMsg;

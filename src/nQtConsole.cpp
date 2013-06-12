@@ -14,7 +14,6 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
-#include <fd/delegate/bind.hpp>
 
 namespace novo{
   //====================================================================
@@ -34,7 +33,7 @@ namespace novo{
       else
         fmt = "<font color=\"#000000\">%s</font><br/>";
 
-      return Out( format(fmt, msg.msg) );
+      return Out( log_format(fmt, msg.msg) );
     }
   };
   //------------------------------------------------------------------//
@@ -48,12 +47,12 @@ namespace novo{
   }
   //------------------------------------------------------------------//
   void QtLogOut::log(const LogMessage &msg){
-    if( !m_callback.empty() )
+    if( m_callback )
       m_callback( QString(formatter()->format_message(msg)) );
   }
   //------------------------------------------------------------------//
   void QtLogOut::set_callback(MsgCallback callback){
-    m_callback=callback;
+    m_callback = callback;
   }
 
 
@@ -78,8 +77,10 @@ namespace novo{
     resize(600,400);
     //-- End of init.
 
-    m_logOut  =new QtLogOut();
-    m_logOut->set_callback( fd::bind(&QtConsole::on_log, this)  );
+    m_logOut  = new QtLogOut();
+    //m_logOut->set_callback( fd::bind(&QtConsole::on_log, this)  );
+    using std::placeholders::_1;
+    m_logOut->set_callback( std::bind(&QtConsole::on_log, this, _1) );
     connect(m_input, SIGNAL(returnPressed()), this, SLOT(on_input()));
     connect(m_input, SLOT(setFocus()), this, SLOT(on_output_focus()));
     

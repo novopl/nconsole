@@ -2,7 +2,7 @@ project(nconsole)
 cmake_minimum_required(VERSION 2.6)
 
 option(BUILD_TESTS  "Build tests"             ON)
-option(QT_SUPPORT   "Enable Qt4 support"      OFF)
+option(QT_SUPPORT   "Enable Qt4 support"      ON)
 option(GL_SUPPORT   "Enable OpenGL support"   OFF)
 
 include_directories(./include)
