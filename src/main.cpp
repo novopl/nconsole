@@ -20,16 +20,6 @@
 #include <nLogger.hpp>
 
 //--------------------------------------------------------------------//
-int test_cmd(const novo::CArgs &args){
-  using namespace novo;
-  typedef CArgs::const_iterator Iter;
-  log("TEST COMMAND:\n");
-  for( Iter it = args.begin(); it != args.end(); ++it ){
-    log( " - %s\n", it->c_str() );
-  }
-}
-
-//--------------------------------------------------------------------//
 int main(int argc, char **argv){
   using namespace novo; 
   logger_init();
@@ -39,10 +29,11 @@ int main(int argc, char **argv){
 
   Console *console = new Console();
 
-  console->add( "test", "Test command", &test_cmd);
-  console->add("test", "Test command", [](const CArgs &args){
+  console->add("test", "Test command", [&](const String &args){
     log("TEST COMMAND:\n");
-    for( const auto &arg: args ){
+    CArgs cargs;
+    console->tokenize( &cargs, args );
+    for( const auto &arg: cargs ){
       log( " - %s\n", arg.c_str() );
     }
   });

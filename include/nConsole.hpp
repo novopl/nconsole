@@ -31,7 +31,7 @@ namespace novo{
     Console& operator=(const Console &obj)  = delete;
     Console& operator=(const Console &&obj) = delete;
 
-    typedef std::function<void(const CArgs &)>  CmdFunc;
+    typedef std::function<void(const String &)>  CmdFunc;
     
   public:
     Console();
@@ -42,20 +42,30 @@ namespace novo{
     bool remove(const String &name);
     bool exists(const String &name);
 
+    void    set(const String &name, const String &value);
+    String  get(const String &name);
+    float   get_float(const String &name);
+    int     get_int(const String &name);
 
-    void cmd_cmdlist(const CArgs &args);
-    void cmd_cvarlist(const CArgs &args);
-    void cmd_cvar(const CArgs &args);
-    void cmd_echo(const CArgs &args);
-    void cmd_help(const CArgs &args);
+    void cmd_cmdlist(const String &args);
+    void cmd_cvarlist(const String &args);
+    void cmd_cvar(const String &args);
+    void cmd_echo(const String &args);
+    void cmd_help(const String &args);
+
+    void tokenize(CArgs *out, const String &in,
+                  const char delim=' ', const char group='\"');
 
   private:
     struct Command;
+    struct Cvar;
     typedef std::vector<Command>    Commands;
+    typedef std::vector<Cvar>       Cvars;
     
     Command* find(const String &name);
 
     Commands  m_commands;
+    Cvars     m_cvars;
   };
 
   extern const int kConsoleMsg;
