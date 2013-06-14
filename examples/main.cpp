@@ -22,19 +22,20 @@
 //--------------------------------------------------------------------//
 int main(int argc, char **argv){
   using namespace novo; 
-  logger_init();
+  using boost::format;
   
-  logger()->add_output( new LogStdOut() );
-  logger()->add_output( new LogFileOut("console.log"),  LogLevel::All );
+  logger::add_output( &logger::stdout );
+  //logger()->add_output( new LogStdOut() );
+  //logger()->add_output( new LogFileOut("console.log"),  LogLevel::All );
 
   Console *console = new Console();
 
   console->add("test", "Test command", [&](const String &args){
-    log("TEST COMMAND:\n");
+    logger::logf("TEST COMMAND:\n");
     CArgs cargs;
     console->tokenize( &cargs, args );
     for( const auto &arg: cargs ){
-      log( " - %s\n", arg.c_str() );
+      logger::logf(str( format(" - %s\n") %arg ));
     }
   });
   console->process_input("cmdlist");
@@ -46,6 +47,5 @@ int main(int argc, char **argv){
   console->remove("test");
   delete console;
 
-  logger_cleanup();
   return 0;
 }

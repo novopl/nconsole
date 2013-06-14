@@ -8,7 +8,7 @@ option(GL_SUPPORT   "Enable OpenGL support"   OFF)
 include_directories(./include)
 
 set(nconsole-src   src/nConsole.cpp)
-set(nconsole-deps  )
+set(nconsole-deps  nlogger)
 
 # nlogger
 add_subdirectory    (lib/nlogger)
@@ -30,44 +30,27 @@ if( QT_SUPPORT )
   include_directories ( ${QT_INCLUDES} )
   add_definitions     ( ${QT_DEFINITIONS} )
 
+  set(qt-moc  examples/nQtConsole.hpp)
+  #set(qt-moc  examples/main_qt.cpp)
+  #set(qt-res   src/qt/resources/resources.qrc)
   
-  
-  set(nconsole-qt-moc   include/nQtConsole.hpp)
-  #set(nconsole-qt-res   src/qt/resources/resources.qrc)
-  
-  if(nconsole-qt-moc)
-    QT4_WRAP_CPP(nconsole-moc-src ${nconsole-qt-moc})
+  if(qt-moc)
+    QT4_WRAP_CPP(moc-src ${qt-moc})
   endif()
   
-  if(nconsole-qt-res)
-    qt4_add_resources(nconsole-res-src ${nconsole-qt-res})
+  if(qt-res)
+    qt4_add_resources(res-src ${qt-res})
   endif()
-
-
-  # Add Qt4 dependent sources
-  list( APPEND nconsole-src  src/nQtConsole.cpp 
-                             ${nconsole-res-src}
-                             ${nconsole-moc-src})
-  list( APPEND nconsole-deps ${QT_LIBRARIES} )
 
   # Target
   #--------
   if( NOT TARGET nconsole-qt )
-    add_executable        (nconsole-qt  src/main_qt.cpp)
+    add_executable        (nconsole-qt  examples/main_qt.cpp
+                                        ${moc-src}
+                                        ${res-src})
     target_link_libraries (nconsole-qt  nconsole ${QT_LIBRARIES})
   endif()
 endif() # Qt4 support
-
-# OpenGL support
-#----------------
-if( GL_SUPPORT )
-  list( APPEND nconsole-deps GL GLU nfonts )
-
-  if( NOT TARGET nconsole-qt )
-    add_executable        (nconsole-gl  src/main_gl.cpp)
-    target_link_libraries (nconsole-gl  nconsole GL GLU )
-  endif()
-endif()
 
 # Enable C++11 support
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -82,9 +65,9 @@ if( NOT TARGET nconsole )
 endif()
 
 
-if( NOT TARGET main_nconsole )
-  add_executable        (main_nconsole  src/main.cpp )
-  target_link_libraries (main_nconsole  nconsole)
+if( NOT TARGET nconsole-simple )
+  add_executable        (nconsole-simple  examples/main.cpp )
+  target_link_libraries (nconsole-simple  nconsole)
 endif()
 
 

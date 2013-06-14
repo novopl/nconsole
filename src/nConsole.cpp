@@ -17,7 +17,10 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 #define _B(METHOD)  std::bind(&METHOD, this, _1)
 
 namespace novo{
-  const int kConsoleMsg = LogMsg::User;
+  using namespace logger;
+  using boost::format;
+
+  const int kConsoleMsg = logger::kGame;
 
   //------------------------------------------------------------------//
   void Console::tokenize(CArgs *out, const String &in, 
@@ -56,9 +59,10 @@ namespace novo{
   };
   //====================================================================
   struct Console::Cvar{
-    String  name;
-    String  desc;
-    String  value;
+    String    name;
+    String    desc;
+    String    value;
+    OnChange  onChange;
 
     bool operator<(const Cvar &cvar) const{
       return name < cvar.name;
@@ -66,7 +70,7 @@ namespace novo{
   };
   //------------------------------------------------------------------//
   Console::Console(){
-    logger()->set_tag(kConsoleMsg, "console");
+    //logger()->set_tag(kConsoleMsg, "console");
     cprint("Initializing console.\n");
 
     using namespace std::placeholders;
@@ -74,8 +78,8 @@ namespace novo{
         std::bind( &Console::cmd_cmdlist, this, _1 ));
     add( "cvarlist", "List of all registered cvars", 
         _B( Console::cmd_cvarlist ) );
-    add( "cvar", "Set/get cvar value", 
-        _B( Console::cmd_cvar ) );
+    add( "set", "Set the cvar value", 
+        _B( Console::cmd_set ) );
     add( "help", "Print this help", 
         _B( Console::cmd_help ) );
     add( "echo", "Print message to the console",   
@@ -86,12 +90,12 @@ namespace novo{
     cprint("Shutting down console.\n");
     remove("cmdlist");
     remove("cvarlist");
-    remove("cvar");
+    remove("set");
     remove("help");
     remove("echo");
 
     for( const auto &cmd: m_commands ){
-      logw("Command '%s' wasn't removed.\n", cmd.name.c_str());
+      logw(str( format("Command '%1%' wasn't removed\n") %cmd.name ));
     }
   }
   //------------------------------------------------------------------//
@@ -103,31 +107,27 @@ namespace novo{
     String name = input.substr(0, off);
     String args = off != String::npos ? input.substr(off+1) : "";
 
-    cprint("] %s\n", input.c_str());
+    cprint( format("] %s\n") %input);
 
-    Command *c = find( name );
-    if( c )
-      c->func( args );
-    else
-      logw( "Command '%s' not found.\n", name.c_str() );
-
-    //cprint("] %s\n", input.c_str());
-
-    //CArgs tokens;
-    //tokenize( &tokens, input, ' ', '\"' );
-
-    //if( tokens.empty() )
-    //  return;
-    //
-    //cprint("] %s\n", input.c_str());
-
-    //Command *c = find( tokens[0] );
-    //if( !c ){
-    //  logw( "Command '%s' not found.\n", tokens[0].c_str() );
-    //  return;
-    //}
-
-    //c->func(tokens);
+    Command *cmd = find( name );
+    if( cmd )
+      cmd->func( args );
+    else{
+      // Try cvars
+      Cvar *cvar = find_cvar( name );
+      if( cvar ){
+        if( args.empty() )
+          cprint( format(" %s = %s\n") %name %cvar->value );
+        else{
+          CArgs arglist;
+          tokenize( &arglist, args );
+          set( name, arglist[0] );
+          cprint( format(" %s = %s\n") %name %cvar->value );
+        }
+      }
+      else
+        logw(str( format("'%1%' not found.\n") % name ));
+    }
   }
   //------------------------------------------------------------------//
   bool Console::add(const String &name, const String &desc, CmdFunc fn){
@@ -154,38 +154,31 @@ namespace novo{
     return false;
   }
   //------------------------------------------------------------------//
-  bool Console::exists(const String &name){
-    return find(name) != 0;
-  }
-  //------------------------------------------------------------------//
-  Console::Command* Console::find(const String &name){
-    for( auto &cmd: m_commands ){
-      if( cmd.name == name )
-        return &cmd;
-    }
-    return nullptr;
+  int Console::exists(const String &name){
+    if( find(name) != nullptr )
+      return 1;
+    else if( find_cvar(name) != nullptr )
+      return 2;
+    return 0;
   }
   //------------------------------------------------------------------//
   void Console::set(const String &name, const String &value){
-    auto it = std::find_if( m_cvars.begin(), m_cvars.end(),
-                            [&](const Cvar &c){
-      return c.name == name; 
-    });
-    if( it != m_cvars.end() ){
-      it->value = value;
+    Cvar *c = find_cvar( name );
+    if( c ){
+      c->value = value;
+      for( auto fn: c->onChange ){
+        fn( name, value );
+      }
     }
     else{
-      logw( "Setting non-existing cvar: %s", name.c_str() );
+      logw(str( format("Setting non-existing cvar: %1%") %name ));
       m_cvars.push_back( Cvar{ name, "", value } );
     }
   }
   //------------------------------------------------------------------//
   String Console::get(const String &name){
-    auto it = std::find_if( m_cvars.begin(), m_cvars.end(),
-                            [&](const Cvar &c){
-      return c.name == name; 
-    });
-    return it != m_cvars.end() ? it->value : "";
+    Cvar *c = find_cvar( name );
+    return c ? c->value : "";
   }
   //------------------------------------------------------------------//
   float Console::get_float(const String &name){
@@ -198,12 +191,22 @@ namespace novo{
     return atoi( value.c_str() );
   }
   //------------------------------------------------------------------//
+  void Console::on_change(const String &name, OnChangeFunc fn){
+    Cvar *cvar = find_cvar( name );
+    if( cvar ){
+      cvar->onChange.push_back( fn );
+    }
+    else{
+      m_cvars.push_back( Cvar{ name, "", "", { fn }} );
+    }
+  }
+  //------------------------------------------------------------------//
   void Console::cmd_cmdlist(const String &args){
     Commands alphaSorted(m_commands);
     std::sort( alphaSorted.begin(), alphaSorted.end() );
 
     for( const auto &cmd: alphaSorted){
-      cprint( " %-20s -- %s\n", cmd.name.c_str(), cmd.desc.c_str() );
+      cprint( format(" %-20s -- %s\n") %cmd.name %cmd.desc );
     }
   }
   //------------------------------------------------------------------//
@@ -212,22 +215,22 @@ namespace novo{
     std::sort( alphaSorted.begin(), alphaSorted.end() );
 
     for( const auto &cmd: alphaSorted){
-      cprint( " %-20s %10s -- %s\n", 
-              cmd.name.c_str(), cmd.value.c_str(), cmd.desc.c_str() );
+      cprint( format(" %-20s %10s -- %s\n") 
+              %cmd.name %cmd.value %cmd.desc );
     }
   }
   //------------------------------------------------------------------//
-  void Console::cmd_cvar(const String &args){
+  void Console::cmd_set(const String &args){
     CArgs cargs;
     tokenize( &cargs, args );
 
     if( cargs.size() == 1 ){
       String val = get( cargs[0] );
-      cprint( " %s = %s\n", cargs[0].c_str(), val.c_str() );
+      cprint( format(" %s = %s\n") %cargs[0] %val );
     }
     else if( cargs.size() == 2 ){
       set( cargs[0], cargs[1] );
-      cprint( " %s = %s\n", cargs[0].c_str(), cargs[1].c_str() );
+      cprint( format(" %s = %s\n") %cargs[0] %cargs[1] );
     }
     else{
       logw("ERROR: Too many arguments!");
@@ -252,31 +255,68 @@ namespace novo{
       cprint("help COMMAND_NAME\n");
     }
     else{
-      CArgs cargs;
-      tokenize( &cargs, args );
+      CArgs arglist;
+      tokenize( &arglist, args );
       
-      for( const auto &arg: cargs ){
-        Command *c = find( cargs[0] );
-        cprint("%s\n", c->name.c_str());
-        cprint("  %s\n", c->desc.c_str());
+      Command *cmd;
+      Cvar    *cvar;
+      for( const auto &arg: arglist ){
+        cmd = find( arg );
+        if( cmd ){
+          cprint( format("%s\n") %cmd->name );
+          cprint( format("  %s\n") %cmd->desc );
+        }
+        else{
+          cvar = find_cvar( arg );
+          if( cvar ){
+            cprint( format("%s = %s\n") %cvar->name %cvar->value );
+            cprint( format("  %s\n") %cvar->desc );
+          }
+        }
       }
     }
   }
   //------------------------------------------------------------------//
   void Console::cmd_echo(const String &args){
-    cprint("%s\n", args.c_str());
+    cprint( format("%s\n") %args);
   }
-
-
   //------------------------------------------------------------------//
-  void cprint(const char *fmt, ...){
-    va_list argList;
-    va_start(argList, fmt);
-
-    char *msg = log_format(fmt, argList);
-    logger()->log( kConsoleMsg, msg );
-    delete[] msg;
+  Console::Command* Console::find(const String &name){
+    for( auto &cmd: m_commands ){
+      if( cmd.name == name )
+        return &cmd;
+    }
+    return nullptr;
   }
+  //------------------------------------------------------------------//
+  Console::Cvar* Console::find_cvar(const String &name){
+    for( auto &cvar: m_cvars ){
+      if( cvar.name == name )
+        return &cvar;
+    }
+    return nullptr;
+  }
+}
+
+
+namespace novo{
+  //------------------------------------------------------------------//
+  void cprint( const std::string &msg ){
+    logger::log( kConsoleMsg, msg );
+  }
+  //------------------------------------------------------------------//
+  void cprint( const boost::basic_format<char> &fmt ){
+    cprint( str(fmt) );
+  }
+  //------------------------------------------------------------------//
+  //void cprint(const char *fmt, ...){
+  //  va_list argList;
+  //  va_start(argList, fmt);
+
+  //  char *msg = log_format(fmt, argList);
+  //  logger::log( kConsoleMsg, msg );
+  //  delete[] msg;
+  //}
 
 }
 
