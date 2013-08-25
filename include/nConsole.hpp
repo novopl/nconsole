@@ -78,6 +78,8 @@ namespace novo{
   extern const int kConsoleMsg;
   extern void cprint(const std::string &msg);
   extern void cprint(const boost::basic_format<char> &fmt);
+  extern void logc(const std::string &msg);
+  extern void logc(const boost::basic_format<char> &fmt);
 }
 
 #endif/* __NOVO_CONSOLE_HPP__ */

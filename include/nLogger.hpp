@@ -2,9 +2,21 @@
 #define __NOVO_NLOGGER_HPP__
 #include <string>
 #include <functional>
+#include <boost/format.hpp>
 
-namespace logger{
-  typedef std::function<void(int, const std::string&)>  LogOut;
+namespace novo{
+  using boost::format;
+  typedef std::string String;
+  typedef int64_t     Time_t;
+  
+  struct LogMsg{
+    int           type;
+    Time_t        when;
+    std::string   msg;
+  };
+
+  typedef std::vector<LogMsg>                 LogBuffer;
+  typedef std::function<void(const LogMsg&)>  LogOut;
   const int kDebug    = 0x0001;
   const int kInfo     = 0x0002;
   const int kWarning  = 0x0004;
@@ -17,16 +29,23 @@ namespace logger{
   const int kLogDebug     = ~0;
 
   
-  extern void add_output( LogOut out );
+  extern void add_log_output( const std::string &name, LogOut out );
+  extern void remove_log_output( const std::string &name );
   extern void log( int type, const std::string &msg );
 
-  // Helpers.
-  inline void logd(const std::string &msg)  {return log(kDebug, msg);  }
-  inline void logf(const std::string &msg)  {return log(kInfo, msg);   }
-  inline void logw(const std::string &msg)  {return log(kWarning, msg);}
-  inline void logerr(const std::string &msg){return log(kError, msg);  }
+  // Helpers
+  typedef boost::basic_format<char> Fmt;
+  inline void logd(const String &msg){ return log(kDebug,   msg+"\n"); }
+  inline void logf(const String &msg){ return log(kInfo,    msg+"\n"); }
+  inline void logw(const String &msg){ return log(kWarning, msg+"\n"); }
+  inline void logerr(const String &msg){ return log(kError, msg+"\n"); }
+  inline void logd(const Fmt &msg){ return log(kDebug,  str(msg)+"\n");}
+  inline void logf(const Fmt &msg){ return log(kInfo,   str(msg)+"\n");}
+  inline void logw(const Fmt &msg){ return log(kWarning,str(msg)+"\n");}
+  inline void logerr(const Fmt &msg){ return log(kError,str(msg)+"\n");}
 
-  extern void stdout( int type, const std::string &msg );
+
+  extern void stdout( const LogMsg &msg );
 }
 #endif/* __NOVO_NLOGGER_HPP__ */
 

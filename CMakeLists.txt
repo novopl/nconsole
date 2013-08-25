@@ -7,12 +7,8 @@ option(GL_SUPPORT   "Enable OpenGL support"   OFF)
 
 include_directories(./include)
 
-set(nconsole-src   src/nConsole.cpp)
-set(nconsole-deps  nlogger)
-
-# nlogger
-add_subdirectory    (lib/nlogger)
-include_directories (lib/nlogger/include)
+set(nconsole-src   src/nConsole.cpp src/nLogger.cpp)
+set(nconsole-deps  )
 
 # Freetype
 #----------

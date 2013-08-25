@@ -67,18 +67,20 @@ void QtConsole::on_input(){
   m_input->clear();
 }
 //------------------------------------------------------------------//
-void QtConsole::on_log(int type, const std::string &msg){
+void QtConsole::on_log( const novo::LogMsg &msg){
   const char *fmt = 0;
-  if( type & logger::kError )
+  if( msg.type & novo::kError )
     fmt = "<font color=\"#ff0000\">%s</font><br/>";
-  else if( type & logger::kWarning )
+  else if( msg.type & novo::kWarning )
     fmt = "<font color=\"#da8b05\">%s</font><br/>";
-  else if( type & logger::kDebug )
+  else if( msg.type & novo::kDebug )
     fmt = "<font color=\"#808080\">%s</font><br/>";
   else
     fmt = "<font color=\"#000000\">%s</font><br/>";
 
-  m_output->append( QString(str( boost::format(fmt) %msg ).c_str()) );
+  m_output->append( 
+      QString(str( boost::format(fmt) %msg.msg ).c_str()) 
+  );
 }
 //------------------------------------------------------------------//
 void QtConsole::on_output_focus(){
@@ -89,28 +91,28 @@ void QtConsole::on_output_focus(){
 
 //--------------------------------------------------------------------//
 int main(int argc, char **argv){
+  using namespace novo;
   using boost::format;
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  logger::add_output( &logger::stdout );
+  add_log_output( "stdout", &novo::stdout );
   QApplication app(argc, argv);
   
-  auto *console = new novo::Console();
+  auto *console = new Console();
   auto *window  = new QtConsole( console );
 
-  logger::add_output( std::bind(&QtConsole::on_log, window, _1, _2) );
+  add_log_output( "qt", std::bind(&QtConsole::on_log, window, _1) );
 
-  using novo::String;
   console->on_change("var", [](const String &name, const String &value){
-    novo::cprint( format("%s changed value to %s") %name %value );
+    cprint( format("%s changed value to %s") %name %value );
   });
   console->add("test", "Test command", [&](const novo::String& args){
-    novo::cprint("TEST COMMAND:\n");
-    novo::CArgs cargs;
+    cprint("TEST COMMAND:\n");
+    CArgs cargs;
     console->tokenize( &cargs, args );
     for( const auto &arg: cargs ){
-      novo::cprint( format(" - %s\n") %arg );
+      cprint( format(" - %s\n") %arg );
     }
   });
   

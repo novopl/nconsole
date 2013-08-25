@@ -17,10 +17,9 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 #define _B(METHOD)  std::bind(&METHOD, this, _1)
 
 namespace novo{
-  using namespace logger;
   using boost::format;
 
-  const int kConsoleMsg = logger::kGame;
+  const int kConsoleMsg = kGame;
 
   //------------------------------------------------------------------//
   void Console::tokenize(CArgs *out, const String &in, 
@@ -71,7 +70,7 @@ namespace novo{
   //------------------------------------------------------------------//
   Console::Console(){
     //logger()->set_tag(kConsoleMsg, "console");
-    cprint("Initializing console.\n");
+    logc("Initializing console.");
 
     using namespace std::placeholders;
     add( "cmdlist", "List of available commands", 
@@ -87,7 +86,7 @@ namespace novo{
   }
   //------------------------------------------------------------------//
   Console::~Console(){
-    cprint("Shutting down console.\n");
+    logc("Shutting down console.");
     remove("cmdlist");
     remove("cvarlist");
     remove("set");
@@ -95,7 +94,7 @@ namespace novo{
     remove("echo");
 
     for( const auto &cmd: m_commands ){
-      logw(str( format("Command '%1%' wasn't removed\n") %cmd.name ));
+      logw( format("Command '%1%' wasn't removed") %cmd.name );
     }
   }
   //------------------------------------------------------------------//
@@ -107,7 +106,7 @@ namespace novo{
     String name = input.substr(0, off);
     String args = off != String::npos ? input.substr(off+1) : "";
 
-    cprint( format("] %s\n") %input);
+    logc( format("] %s") %input);
 
     Command *cmd = find( name );
     if( cmd )
@@ -117,16 +116,16 @@ namespace novo{
       Cvar *cvar = find_cvar( name );
       if( cvar ){
         if( args.empty() )
-          cprint( format(" %s = %s\n") %name %cvar->value );
+          logc( format(" %s = %s") %name %cvar->value );
         else{
           CArgs arglist;
           tokenize( &arglist, args );
           set( name, arglist[0] );
-          cprint( format(" %s = %s\n") %name %cvar->value );
+          logc( format(" %s = %s") %name %cvar->value );
         }
       }
       else
-        logw(str( format("'%1%' not found.\n") % name ));
+        logw(str( format("'%1%' not found.") % name ));
     }
   }
   //------------------------------------------------------------------//
@@ -171,7 +170,7 @@ namespace novo{
       }
     }
     else{
-      logw(str( format("Setting non-existing cvar: %1%") %name ));
+      logw( format("Setting non-existing cvar: %1%") %name );
       m_cvars.push_back( Cvar{ name, "", value } );
     }
   }
@@ -206,7 +205,7 @@ namespace novo{
     std::sort( alphaSorted.begin(), alphaSorted.end() );
 
     for( const auto &cmd: alphaSorted){
-      cprint( format(" %-20s -- %s\n") %cmd.name %cmd.desc );
+      logc( format(" %-20s -- %s") %cmd.name %cmd.desc );
     }
   }
   //------------------------------------------------------------------//
@@ -215,8 +214,7 @@ namespace novo{
     std::sort( alphaSorted.begin(), alphaSorted.end() );
 
     for( const auto &cmd: alphaSorted){
-      cprint( format(" %-20s %10s -- %s\n") 
-              %cmd.name %cmd.value %cmd.desc );
+      logc(format(" %-20s %10s -- %s") %cmd.name %cmd.value %cmd.desc);
     }
   }
   //------------------------------------------------------------------//
@@ -226,11 +224,11 @@ namespace novo{
 
     if( cargs.size() == 1 ){
       String val = get( cargs[0] );
-      cprint( format(" %s = %s\n") %cargs[0] %val );
+      logc( format(" %s = %s") %cargs[0] %val );
     }
     else if( cargs.size() == 2 ){
       set( cargs[0], cargs[1] );
-      cprint( format(" %s = %s\n") %cargs[0] %cargs[1] );
+      logc( format(" %s = %s") %cargs[0] %cargs[1] );
     }
     else{
       logw("ERROR: Too many arguments!");
@@ -240,19 +238,19 @@ namespace novo{
   void Console::cmd_help(const String &args){
     if( args.empty() ){
       // Print general help.
-      cprint("To execute a command use syntax:\n");
-      cprint(" COMMAND [arguments]\n\n");
+      logc("To execute a command use syntax:");
+      logc(" COMMAND [arguments]\n");
 
-      cprint("Not all commands accept arguments. Each word is a\n");
-      cprint("separate argument. If you want to pass multiple words\n");
-      cprint("as one argument, enclose them in double quotation\n");
-      cprint("marks - '\"'\n\n");
+      logc("Not all commands accept arguments. Each word is a");
+      logc("separate argument. If you want to pass multiple words");
+      logc("as one argument, enclose them in double quotation");
+      logc("marks - '\"'\n");
 
-      cprint("To see the list of all available commands type:\n");
-      cprint("cmdlist\n\n");
+      logc("To see the list of all available commands type:");
+      logc("cmdlist\n");
 
-      cprint("To get the help about a specific command type:\n");
-      cprint("help COMMAND_NAME\n");
+      logc("To get the help about a specific command type:");
+      logc("help COMMAND_NAME");
     }
     else{
       CArgs arglist;
@@ -263,14 +261,14 @@ namespace novo{
       for( const auto &arg: arglist ){
         cmd = find( arg );
         if( cmd ){
-          cprint( format("%s\n") %cmd->name );
-          cprint( format("  %s\n") %cmd->desc );
+          logc( format("%s") %cmd->name );
+          logc( format("  %s") %cmd->desc );
         }
         else{
           cvar = find_cvar( arg );
           if( cvar ){
-            cprint( format("%s = %s\n") %cvar->name %cvar->value );
-            cprint( format("  %s\n") %cvar->desc );
+            logc( format("%s = %s") %cvar->name %cvar->value );
+            logc( format("  %s") %cvar->desc );
           }
         }
       }
@@ -302,11 +300,19 @@ namespace novo{
 namespace novo{
   //------------------------------------------------------------------//
   void cprint( const std::string &msg ){
-    logger::log( kConsoleMsg, msg );
+    log( kConsoleMsg, msg );
   }
   //------------------------------------------------------------------//
   void cprint( const boost::basic_format<char> &fmt ){
     cprint( str(fmt) );
+  }
+  //------------------------------------------------------------------//
+  void logc( const std::string &msg ){
+    log( kConsoleMsg, msg+"\n" );
+  }
+  //------------------------------------------------------------------//
+  void logc( const boost::basic_format<char> &fmt ){
+    logc( str(fmt) );
   }
   //------------------------------------------------------------------//
   //void cprint(const char *fmt, ...){

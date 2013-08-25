@@ -22,6 +22,10 @@ class QLabel;
 class QLineEdit;
 class QTextEdit;
 
+namespace novo{
+  class LogMsg;
+}
+
 class QtConsole : public QWidget{
   QtConsole(const QtConsole &obj)             = delete;
   QtConsole& operator=(const QtConsole &obj)  = delete;
@@ -31,7 +35,7 @@ public:
   QtConsole(novo::Console *console);
   virtual ~QtConsole();
   
-  void on_log(int type, const std::string &msg);
+  void on_log( const novo::LogMsg &msg );
 
 private slots:
   void on_input();

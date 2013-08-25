@@ -24,18 +24,18 @@ int main(int argc, char **argv){
   using namespace novo; 
   using boost::format;
   
-  logger::add_output( &logger::stdout );
+  novo::add_log_output( "stdout", &novo::stdout );
   //logger()->add_output( new LogStdOut() );
   //logger()->add_output( new LogFileOut("console.log"),  LogLevel::All );
 
   Console *console = new Console();
 
   console->add("test", "Test command", [&](const String &args){
-    logger::logf("TEST COMMAND:\n");
+    novo::logf("TEST COMMAND:\n");
     CArgs cargs;
     console->tokenize( &cargs, args );
     for( const auto &arg: cargs ){
-      logger::logf(str( format(" - %s\n") %arg ));
+      novo::logf(str( format(" - %s\n") %arg ));
     }
   });
   console->process_input("cmdlist");
