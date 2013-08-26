@@ -7,7 +7,7 @@ option(GL_SUPPORT   "Enable OpenGL support"   OFF)
 
 include_directories(./include)
 
-set(nconsole-src   src/nConsole.cpp src/nLogger.cpp)
+set(nconsole-src   src/nConsole.cpp src/nLogger.cpp src/nRCon.cpp)
 set(nconsole-deps  )
 
 # Freetype
@@ -26,7 +26,7 @@ if( QT_SUPPORT )
   include_directories ( ${QT_INCLUDES} )
   add_definitions     ( ${QT_DEFINITIONS} )
 
-  set(qt-moc  examples/nQtConsole.hpp)
+  set(qt-moc  examples/rcon_qt.hpp)
   #set(qt-moc  examples/main_qt.cpp)
   #set(qt-res   src/qt/resources/resources.qrc)
   
@@ -40,11 +40,11 @@ if( QT_SUPPORT )
 
   # Target
   #--------
-  if( NOT TARGET nconsole-qt )
-    add_executable        (nconsole-qt  examples/main_qt.cpp
-                                        ${moc-src}
-                                        ${res-src})
-    target_link_libraries (nconsole-qt  nconsole ${QT_LIBRARIES})
+  if( NOT TARGET rcon-qt )
+    add_executable        (rcon-qt  examples/rcon_qt.cpp
+                                    ${moc-src}
+                                    ${res-src} )
+    target_link_libraries (rcon-qt  nconsole ${QT_LIBRARIES})
   endif()
 endif() # Qt4 support
 

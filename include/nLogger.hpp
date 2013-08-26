@@ -32,6 +32,7 @@ namespace novo{
   extern void add_log_output( const std::string &name, LogOut out );
   extern void remove_log_output( const std::string &name );
   extern void log( int type, const std::string &msg );
+  extern void lograw( int type, Time_t when, const std::string &msg );
 
   // Helpers
   typedef boost::basic_format<char> Fmt;

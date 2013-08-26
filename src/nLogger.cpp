@@ -54,7 +54,7 @@ namespace novo{
 
 
   //------------------------------------------------------------------//
-  void add_log_output( const std::string &name, LogOut out ){
+  void add_log_output( const std::string &name, LogOut out ){ //{{{
     auto it = find( g_outs, [&name]( LogOutDesc &d){
         return d.name == name;
     });
@@ -67,24 +67,29 @@ namespace novo{
         out( entry );
     }
   }
-  //------------------------------------------------------------------//
-  void remove_log_output( const std::string &name ){
+  //}}}---------------------------------------------------------------//
+  void remove_log_output( const std::string &name ){ //{{{
     auto it = find( g_outs, [&name]( LogOutDesc &d){
         return d.name == name;
     });
     if( it != g_outs.end() )
       g_outs.erase( it );
   }
-  //------------------------------------------------------------------//
-  void log( int type, const std::string &msg ){
-    LogMsg  message{ type, get_time(), msg };
+  //}}}---------------------------------------------------------------//
+  void log( int type, const std::string &msg ){ //{{{
+    lograw( type, get_time(), msg );
+  }
+  //}}}---------------------------------------------------------------//
+  void lograw( int type, Time_t when, const std::string &msg ){ //{{{
+    LogMsg  message{ type, when, msg };
     for( const auto &out: g_outs )
       out.out( message );
     g_buffer.push_back( message );
   }
+  //}}}
 
   //------------------------------------------------------------------//
-  void stdout( const LogMsg &msg ){
+  void stdout( const LogMsg &msg ){ //{{{
     const char *tag;
     switch( msg.type ){
       case kDebug :     tag = "debug";    break;
@@ -95,5 +100,6 @@ namespace novo{
     };
     printf("%10s | %s", tag, msg.msg.c_str());
   }
+  //}}}
 }
 

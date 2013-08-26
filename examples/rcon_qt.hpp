@@ -14,6 +14,7 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 
 #include "nConsole.hpp"
 #include "nLogger.hpp"
+#include <vector>
 #include <functional>
 #include <QWidget>
 #include <QLabel>
@@ -21,9 +22,11 @@ Copyright (c) 2010 Mateusz 'novo' Klos
 class QLabel;
 class QLineEdit;
 class QTextEdit;
+class QPushButton;
 
 namespace novo{
   class LogMsg;
+  class RConClient;
 }
 
 class QtConsole : public QWidget{
@@ -41,13 +44,20 @@ private slots:
   void on_input();
   void on_output_focus();
   void on_update();
+  void on_connect();
 
 private:
   QTextEdit     *m_output;
   QLineEdit     *m_input;
   QTimer        *m_timer;
+  QLineEdit     *m_addr;
+  QLineEdit     *m_port;
+  QPushButton   *m_connect;
   
-  novo::Console *m_console;
+  int               m_sock;
+  std::vector<char> m_buff;
+  novo::Console     *m_console;
+  novo::RConClient  *m_rcon;
 };
 
 
