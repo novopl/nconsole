@@ -36,14 +36,14 @@ namespace novo{
 
   // Helpers
   typedef boost::basic_format<char> Fmt;
-  inline void logd(const String &msg){ return log(kDebug,   msg+"\n"); }
-  inline void logf(const String &msg){ return log(kInfo,    msg+"\n"); }
-  inline void logw(const String &msg){ return log(kWarning, msg+"\n"); }
-  inline void logerr(const String &msg){ return log(kError, msg+"\n"); }
-  inline void logd(const Fmt &msg){ return log(kDebug,  str(msg)+"\n");}
-  inline void logf(const Fmt &msg){ return log(kInfo,   str(msg)+"\n");}
-  inline void logw(const Fmt &msg){ return log(kWarning,str(msg)+"\n");}
-  inline void logerr(const Fmt &msg){ return log(kError,str(msg)+"\n");}
+  inline void logd(const String &msg)   { return log( kDebug,   msg+"\n");     }
+  inline void logf(const String &msg)   { return log( kInfo,    msg+"\n");     }
+  inline void logw(const String &msg)   { return log( kWarning, msg+"\n");     }
+  inline void logerr(const String &msg) { return log( kError,   msg+"\n");     }
+  inline void logd(const Fmt &msg)      { return log( kDebug,   str(msg)+"\n");}
+  inline void logf(const Fmt &msg)      { return log( kInfo,    str(msg)+"\n");}
+  inline void logw(const Fmt &msg)      { return log( kWarning, str(msg)+"\n");}
+  inline void logerr(const Fmt &msg)    { return log( kError,   str(msg)+"\n");}
 
 
   extern void stdout( const LogMsg &msg );
