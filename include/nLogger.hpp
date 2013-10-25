@@ -28,7 +28,7 @@ namespace novo{
   const int kLogNormal    = 1 ^ kDebug;
   const int kLogDebug     = ~0;
 
-  
+
   extern void add_log_output( const std::string &name, LogOut out );
   extern void remove_log_output( const std::string &name );
   extern void log( int type, const std::string &msg );
@@ -36,6 +36,10 @@ namespace novo{
 
   // Helpers
   typedef boost::basic_format<char> Fmt;
+  inline boost::basic_format<char> operator "" _fmt (const char *str, size_t){
+    return format(str);
+  }
+
   inline void logd(const String &msg)   { return log( kDebug,   msg+"\n");     }
   inline void logf(const String &msg)   { return log( kInfo,    msg+"\n");     }
   inline void logw(const String &msg)   { return log( kWarning, msg+"\n");     }
