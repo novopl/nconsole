@@ -300,7 +300,7 @@ namespace novo{
 namespace novo{
   //------------------------------------------------------------------//
   void cprint( const std::string &msg ){
-    log( kConsoleMsg, msg );
+    logmsg( kConsoleMsg, msg );
   }
   //------------------------------------------------------------------//
   void cprint( const boost::basic_format<char> &fmt ){
@@ -308,7 +308,7 @@ namespace novo{
   }
   //------------------------------------------------------------------//
   void logc( const std::string &msg ){
-    log( kConsoleMsg, msg+"\n" );
+    logmsg( kConsoleMsg, msg+"\n" );
   }
   //------------------------------------------------------------------//
   void logc( const boost::basic_format<char> &fmt ){

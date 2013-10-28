@@ -8,7 +8,7 @@ namespace novo{
   using boost::format;
   typedef std::string String;
   typedef int64_t     Time_t;
-  
+
   struct LogMsg{
     int           type;
     Time_t        when;
@@ -31,23 +31,27 @@ namespace novo{
 
   extern void add_log_output( const std::string &name, LogOut out );
   extern void remove_log_output( const std::string &name );
-  extern void log( int type, const std::string &msg );
+  extern void logmsg( int type, const std::string &msg );
   extern void lograw( int type, Time_t when, const std::string &msg );
 
   // Helpers
   typedef boost::basic_format<char> Fmt;
-  inline boost::basic_format<char> operator "" _fmt (const char *str, size_t){
-    return format(str);
+  namespace suffix{
+    inline boost::basic_format<char> operator "" _fmt (const char *str, size_t){
+      return format(str);
+    }
   }
 
-  inline void logd(const String &msg)   { return log( kDebug,   msg+"\n");     }
-  inline void logf(const String &msg)   { return log( kInfo,    msg+"\n");     }
-  inline void logw(const String &msg)   { return log( kWarning, msg+"\n");     }
-  inline void logerr(const String &msg) { return log( kError,   msg+"\n");     }
-  inline void logd(const Fmt &msg)      { return log( kDebug,   str(msg)+"\n");}
-  inline void logf(const Fmt &msg)      { return log( kInfo,    str(msg)+"\n");}
-  inline void logw(const Fmt &msg)      { return log( kWarning, str(msg)+"\n");}
-  inline void logerr(const Fmt &msg)    { return log( kError,   str(msg)+"\n");}
+  inline void logd(const String &msg)   { return logmsg( kDebug,   msg+"\n");  }
+  inline void logf(const String &msg)   { return logmsg( kInfo,    msg+"\n");  }
+  inline void log(const String &msg)    { return logmsg( kInfo,    msg+"\n");  }
+  inline void logw(const String &msg)   { return logmsg( kWarning, msg+"\n");  }
+  inline void logerr(const String &msg) { return logmsg( kError,   msg+"\n");  }
+  inline void logd(const Fmt &msg)   { return logmsg( kDebug,   str(msg)+"\n");}
+  inline void logf(const Fmt &msg)   { return logmsg( kInfo,    str(msg)+"\n");}
+  inline void log(const Fmt &msg)    { return logmsg( kInfo,    str(msg)+"\n");}
+  inline void logw(const Fmt &msg)   { return logmsg( kWarning, str(msg)+"\n");}
+  inline void logerr(const Fmt &msg) { return logmsg( kError,   str(msg)+"\n");}
 
 
   extern void stdout( const LogMsg &msg );

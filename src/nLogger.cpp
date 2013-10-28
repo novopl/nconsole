@@ -80,7 +80,7 @@ namespace novo{
     });
 
     if( it != g_outs.end() )
-      log( kError, "Log output already exists: " + name );
+      logmsg( kError, "Log output already exists: " + name );
     else{
       g_outs.push_back( LogOutDesc{ name, out } );
       for( const auto &entry: g_buffer )
@@ -105,7 +105,7 @@ namespace novo{
   ///   @param[in]  type  Message type
   ///   @param[in]  msg   The message itself
   //--------------------------------------------------------------------------//
-  void log( int type, const std::string &msg ){
+  void logmsg( int type, const std::string &msg ){
     lograw( type, get_time(), msg );
   }
   //}}}-----------------------------------------------------------------------//
